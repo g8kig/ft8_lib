@@ -162,6 +162,7 @@ static int pack77_1(const char *msg, uint8_t *b77) {
 		return -1;
 
 	s1++;
+
 	if (memcmp(s1, "DX ", 3) == 0)
     {
         s1 += 3;
@@ -319,12 +320,55 @@ int test2() {
         "CQ DX LL3JG KO26",
         "CQ POTA LL3JG KO26",
         "CQ SOTA LL3JG KO26",
+
+        "CQ LL3JG/P",
+        "CQ LL3JG/P KO26",
+        "CQ QRP LL3JG/P KO26",
+        "CQ DX LL3JG/P KO26",
+        "CQ POTA LL3JG/P KO26",
+        "CQ SOTA LL3JG/P KO26",
+
         "L0UAA LL3JG KO26",
         "L0UAA LL3JG +02",
         "L0UAA LL3JG RRR",
         "L0UAA LL3JG 73",
         "L0UAA LL3JG RR",
         "L0UAA LL3JG RR73",
+        
+		"GW8KIG GM8KIG KO26",
+		"GW8KIG GM8KIG +02",
+		"GW8KIG GM8KIG RRR",
+		"GW8KIG GM8KIG 73",
+		"GW8KIG GM8KIG RR",
+		"GW8KIG GM8KIG RR73",
+
+		"L0UAA/P LL3JG KO26",
+        "L0UAA/P LL3JG +02",
+        "L0UAA/P LL3JG RRR",
+        "L0UAA/P LL3JG 73",
+        "L0UAA/P LL3JG RR",
+        "L0UAA/P LL3JG RR73",
+
+		"GW8KIG/P GM8KIG/P KO26",
+		"GW8KIG/P GM8KIG/P +02",
+		"GW8KIG/P GM8KIG/P RRR",
+		"GW8KIG/P GM8KIG/P 73",
+		"GW8KIG/P GM8KIG/P RR",
+		"GW8KIG/P GM8KIG/P RR73",
+
+		"L0UAA LL3JG/P KO26",
+        "L0UAA LL3JG/P +02",
+        "L0UAA LL3JG/P RRR",
+        "L0UAA LL3JG/P 73",
+        "L0UAA LL3JG/P RR",
+        "L0UAA LL3JG/P RR73",
+
+		"L0UAA/P LL3JG/P KO26",
+        "L0UAA/P LL3JG/P +02",
+        "L0UAA/P LL3JG/P RRR",
+        "L0UAA/P LL3JG/P 73",
+        "L0UAA/P LL3JG/P RR",
+        "L0UAA/P LL3JG/P RR73",
         0
     };
 
