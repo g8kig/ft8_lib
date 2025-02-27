@@ -65,6 +65,16 @@ int char_index(const char *string, char c) {
     return -1;  // Not found
 }
 
+#ifndef stpcpy
+char* stpcpy(char* dst, const char* src)
+{
+    if (src == NULL || dst == NULL)
+        return NULL;
+
+    strcpy(dst, src);
+    return dst + strlen(src);
+}
+#endif
 
 // Text message formatting:
 //   - replaces lowercase letters with uppercase

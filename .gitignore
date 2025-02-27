@@ -7,3 +7,6 @@ wsjtx2/
 .DS_Store
 .vscode/
 __pycache__/
+FT8libraryTest/
+x64/
+
