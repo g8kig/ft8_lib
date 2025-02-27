@@ -14,283 +14,309 @@
 #include <stdio.h>
 
 // TODO: This is wasteful, should figure out something more elegant
-const char A0[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ+-./?";
-const char A1[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const char A2[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const char A3[] = "0123456789";
-const char A4[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const char A0[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ+-./?";
+static const char A1[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const char A2[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const char A3[] = "0123456789";
+static const char A4[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+static const char DE_[] = "DE ";
+static const char QRZ_[] = "QRZ ";
+static const char CQ_SOTA_[] = "CQ SOTA ";
+static const char CQ_POTA_[] = "CQ POTA ";
+static const char CQ_QRP_[] = "CQ QRP ";
+static const char CQ_DX_[] = "CQ DX ";
+static const char CQ_[] = "CQ ";
+static const char DX_[] = "DX ";
+static const char OTA_[] = "OTA ";
+static const char QRP_[] = "QRP ";
+static const char RRR[] = "RRR";
+static const char RR[] = "RR";
+static const char RR73[] = "RR73";
+static const char _73[] = "73";
 
 // Pack a special token, a 22-bit hash code, or a valid base call
 // into a 28-bit integer.
-static int32_t pack28(const char *callsign) {
+static int32_t pack28(const char* callsign)
+{
 
-	int32_t NTOKENS = 2063592L;
-	int32_t MAX22 = 4194304L;
+    int32_t NTOKENS = 2063592L;
+    int32_t MAX22 = 4194304L;
 
-	// Check for special tokens first
-	if (memcmp(callsign, "DE ", 3) == 0)
-		return 0;
-	if (memcmp(callsign, "QRZ ", 3) == 0)
-		return 1;
-	if (memcmp(callsign, "CQ SOTA ", 8) == 0)
-		return 386456;
-	if (memcmp(callsign, "CQ POTA ", 8) == 0)
-		return 327407;
-	if (memcmp(callsign, "CQ QRP ", 7) == 0)
-		return 349184;
-	if (memcmp(callsign, "CQ DX ", 6) == 0)
-		return 1135;
-	if (memcmp(callsign, "CQ ", 3) == 0)
-		return 2;
+    // Check for special tokens first
+    if (memcmp(callsign, DE_, sizeof(DE_)) == 0)
+        return 0;
+    if (memcmp(callsign, QRZ_, sizeof(QRZ_)) == 0)
+        return 1;
+    if (memcmp(callsign, CQ_SOTA_, sizeof(CQ_SOTA_)) == 0)
+        return 386456;
+    if (memcmp(callsign, CQ_POTA_, sizeof(CQ_POTA_)) == 0)
+        return 327407;
+    if (memcmp(callsign, CQ_QRP_, sizeof(CQ_QRP_)) == 0)
+        return 349184;
+    if (memcmp(callsign, CQ_DX_, sizeof(CQ_DX_)) == 0)
+        return 1135;
+    if (memcmp(callsign, CQ_, sizeof(CQ_)) == 0)
+        return 2;
 
-	char c6[6] = "      ";
+    char c6[6] = "      ";
 
-	int length = 0; // strlen(callsign);  // We will need it later
-	while (callsign[length] != ' ' && callsign[length] != 0) {
-		length++;
-	}
+    int length = 0; // strlen(callsign);  // We will need it later
+    while (callsign[length] != ' ' && callsign[length] != 0)
+    {
+        length++;
+    }
 
-	// Copy callsign to 6 character buffer
-	if (starts_with(callsign, "3DA0") && length <= 7) {
-		// Work-around for Swaziland prefix: 3DA0XYZ -> 3D0XYZ
-		memcpy(c6, "3D0", 3);
-		memcpy(c6 + 3, callsign + 4, length - 4);
-	} else if (starts_with(callsign, "3X") && is_letter(callsign[2])
-			&& length <= 7) {
-		// Work-around for Guinea prefixes: 3XA0XYZ -> QA0XYZ
-		memcpy(c6, "Q", 1);
-		memcpy(c6 + 1, callsign + 2, length - 2);
-	} else {
-		if (is_digit(callsign[2]) && length <= 6) {
-			// AB0XYZ
-			memcpy(c6, callsign, length);
-		} else if (is_digit(callsign[1]) && length <= 5) {
-			// A0XYZ -> " A0XYZ"
-			memcpy(c6 + 1, callsign, length);
-		}
-	}
+    // Copy callsign to 6 character buffer
+    if (starts_with(callsign, "3DA0") && length <= 7)
+    {
+        // Work-around for Swaziland prefix: 3DA0XYZ -> 3D0XYZ
+        memcpy(c6, "3D0", 3);
+        memcpy(c6 + 3, callsign + 4, length - 4);
+    }
+    else if (starts_with(callsign, "3X") && is_letter(callsign[2])
+        && length <= 7)
+    {
+        // Work-around for Guinea prefixes: 3XA0XYZ -> QA0XYZ
+        memcpy(c6, "Q", 1);
+        memcpy(c6 + 1, callsign + 2, length - 2);
+    }
+    else
+    {
+        if (is_digit(callsign[2]) && length <= 6)
+        {
+            // AB0XYZ
+            memcpy(c6, callsign, length);
+        }
+        else if (is_digit(callsign[1]) && length <= 5)
+        {
+            // A0XYZ -> " A0XYZ"
+            memcpy(c6 + 1, callsign, length);
+        }
+    }
 
-	// Check for standard callsign
-	int i0, i1, i2, i3, i4, i5;
-	if ((i0 = char_index(A1, c6[0])) >= 0 && (i1 = char_index(A2, c6[1])) >= 0
-			&& (i2 = char_index(A3, c6[2])) >= 0
-			&& (i3 = char_index(A4, c6[3])) >= 0
-			&& (i4 = char_index(A4, c6[4])) >= 0
-			&& (i5 = char_index(A4, c6[5])) >= 0) {
-		// This is a standard callsign
-		int32_t n28 = i0;
-		n28 = n28 * 36 + i1;
-		n28 = n28 * 10 + i2;
-		n28 = n28 * 27 + i3;
-		n28 = n28 * 27 + i4;
-		n28 = n28 * 27 + i5;
-		return NTOKENS + MAX22 + n28;
-	}
-	return -1;
+    // Check for standard callsign
+    int i0, i1, i2, i3, i4, i5;
+    if ((i0 = char_index(A1, c6[0])) >= 0 && (i1 = char_index(A2, c6[1])) >= 0
+        && (i2 = char_index(A3, c6[2])) >= 0
+        && (i3 = char_index(A4, c6[3])) >= 0
+        && (i4 = char_index(A4, c6[4])) >= 0
+        && (i5 = char_index(A4, c6[5])) >= 0)
+    {
+        // This is a standard callsign
+        int32_t n28 = i0;
+        n28 = n28 * 36 + i1;
+        n28 = n28 * 10 + i2;
+        n28 = n28 * 27 + i3;
+        n28 = n28 * 27 + i4;
+        n28 = n28 * 27 + i5;
+        return NTOKENS + MAX22 + n28;
+    }
+    return -1;
 }
 
-// Check if a string could be a valid standard callsign or a valid
-// compound callsign.
-// Return base call "bc" and a logical "cok" indicator.
-#if 0
-static _Bool chkcall(const char *call) {
-	int length = strlen(call);   // n1=len_trim(w)
-	if (length > 11)
-		return 0;
-	if (0 != strchr(call, '.'))
-		return 0;
-	if (0 != strchr(call, '+'))
-		return 0;
-	if (0 != strchr(call, '-'))
-		return 0;
-	if (0 != strchr(call, '?'))
-		return 0;
-	if (length > 6 && 0 != strchr(call, '/'))
-		return 0;
+static uint16_t packgrid(const char* grid4)
+{
+    uint16_t MAXGRID4 = 32400;
 
-	return 1;
-}
-#endif
+    if (grid4 == 0)
+    {
+        // Two callsigns only, no report/grid
+        return MAXGRID4 + 1;
+    }
 
-static uint16_t packgrid(const char *grid4) {
-	uint16_t MAXGRID4 = 32400;
+    // Take care of special cases
+    if (equals(grid4, RRR) == 0)
+        return MAXGRID4 + 2;
+    if (equals(grid4, RR73) == 0)
+        return MAXGRID4 + 3;
+	if (equals(grid4, RR) == 0)
+        return MAXGRID4 + 1;
+    if (equals(grid4, _73) == 0)
+        return MAXGRID4 + 4;
 
-	if (grid4 == 0) {
-		// Two callsigns only, no report/grid
-		return MAXGRID4 + 1;
-	}
+    // Check for standard 4 letter grid
+    if (in_range(grid4[0], 'A', 'R') && in_range(grid4[1], 'A', 'R')
+        && is_digit(grid4[2]) && is_digit(grid4[3]))
+    {
+        // if (w(3).eq.'R ') ir=1
+        uint16_t igrid4 = (grid4[0] - 'A');
+        igrid4 = igrid4 * 18 + (grid4[1] - 'A');
+        igrid4 = igrid4 * 10 + (grid4[2] - '0');
+        igrid4 = igrid4 * 10 + (grid4[3] - '0');
+        return igrid4;
+    }
 
-	// Take care of special cases
-	if (equals(grid4, "RRR"))
-		return MAXGRID4 + 2;
-	if (equals(grid4, "RR73"))
-		return MAXGRID4 + 3;
-	if (equals(grid4, "73"))
-		return MAXGRID4 + 4;
+    // Parse report: +dd / -dd / R+dd / R-dd
+    // TODO: check the range of dd
+    if (grid4[0] == 'R')
+    {
+        int dd = dd_to_int(grid4 + 1, 3);
+        uint16_t irpt = 35 + dd;
+        return (MAXGRID4 + irpt) | 0x8000; // ir = 1
+    }
+    else
+    {
+        int dd = dd_to_int(grid4, 3);
+        uint16_t irpt = 35 + dd;
+        return (MAXGRID4 + irpt); // ir = 0
+    }
 
-	// Check for standard 4 letter grid
-	if (in_range(grid4[0], 'A', 'R') && in_range(grid4[1], 'A', 'R')
-			&& is_digit(grid4[2]) && is_digit(grid4[3])) {
-		//if (w(3).eq.'R ') ir=1
-		uint16_t igrid4 = (grid4[0] - 'A');
-		igrid4 = igrid4 * 18 + (grid4[1] - 'A');
-		igrid4 = igrid4 * 10 + (grid4[2] - '0');
-		igrid4 = igrid4 * 10 + (grid4[3] - '0');
-		return igrid4;
-	}
-
-	// Parse report: +dd / -dd / R+dd / R-dd
-	// TODO: check the range of dd
-	if (grid4[0] == 'R') {
-		int dd = dd_to_int(grid4 + 1, 3);
-		uint16_t irpt = 35 + dd;
-		return (MAXGRID4 + irpt) | 0x8000;  // ir = 1
-	} else {
-		int dd = dd_to_int(grid4, 3);
-		uint16_t irpt = 35 + dd;
-		return (MAXGRID4 + irpt);           // ir = 0
-	}
-
-	return MAXGRID4 + 1;
+    return MAXGRID4 + 1;
 }
 
 // Pack Type 1 (Standard 77-bit message) and Type 2 (ditto, with a "/P" call)
-static int pack77_1(const char *msg, uint8_t *b77) {
-	// Locate the first delimiter
-	const char *s1 = strchr(msg, ' ');
-	if (s1 == 0)
-		return -1;
+static int pack77_1(const char* msg, uint8_t* b77)
+{
+    // Locate the first delimiter
+    const char* s1 = strchr(msg, ' ');
+    if (s1 == 0)
+        return -1;
 
-	s1++;
-
-	if (memcmp(s1, "DX ", 3) == 0)
+    if (memcmp(++s1, DX_, sizeof(DX_)) == 0)
     {
         s1 += 3;
     }
-    else if (memcmp(s1, "QRP ", 4) == 0)
+    else if (memcmp(s1, QRP_, sizeof(QRP_)) == 0)
     {
         s1 += 4;
     }
-    else if ((*s1 == 'P' || *s1 == 'S') && memcmp(s1 + 1, "OTA ", 4) == 0)
-	{
+    else if ((*s1 == 'P' || *s1 == 'S') && memcmp(s1 + 1, OTA_, sizeof(OTA_)) == 0)
+    {
         s1 += 5;
-	}
-    
-	const char* call1 = msg;    // 1st call
-	const char *call2 = s1;     // 2nd call
+    }
 
-	int32_t n28a = pack28(call1);
-	int32_t n28b = pack28(call2);
+    const char* call1 = msg; // 1st call
+    const char* call2 = s1;  // 2nd call
 
-	if (n28a < 0 || n28b < 0)
-		return -1;
+    int32_t n28a = pack28(call1);
+    int32_t n28b = pack28(call2);
 
-	uint16_t igrid4;
+    if (n28a < 0 || n28b < 0)
+        return -1;
 
-	// Locate the second delimiter
-	const char *s2 = strchr(s1 + 1, ' ');
-	if (s2 != 0) {
-		igrid4 = packgrid(s2 + 1);
-	} else {
-		// Two callsigns, no grid/report
-		igrid4 = packgrid(0);
-	}
+    uint16_t igrid4;
 
-	uint8_t i3 = 1; // No suffix or /R
+    // Locate the second delimiter
+    const char* s2 = strchr(s1 + 1, ' ');
+    if (s2 != 0)
+    {
+        igrid4 = packgrid(s2 + 1);
+    }
+    else
+    {
+        // Two callsigns, no grid/report
+        igrid4 = packgrid(0);
+    }
 
-	// Shift in ipa and ipb bits into n28a and n28b
-	n28a <<= 1; // ipa = 0
-	n28b <<= 1; // ipb = 0
+    uint8_t i3 = 1; // No suffix or /R
 
-	// Pack into (28 + 1) + (28 + 1) + (1 + 15) + 3 bits
-	// write(c77,1000) n28a,ipa,n28b,ipb,ir,igrid4,i3
-	// 1000 format(2(b28.28,b1),b1,b15.15,b3.3)
+    // Shift in ipa and ipb bits into n28a and n28b
+    n28a <<= 1; // ipa = 0
+    n28b <<= 1; // ipb = 0
 
-	b77[0] = (n28a >> 21);
-	b77[1] = (n28a >> 13);
-	b77[2] = (n28a >> 5);
-	b77[3] = (uint8_t) (n28a << 3) | (uint8_t) (n28b >> 26);
-	b77[4] = (n28b >> 18);
-	b77[5] = (n28b >> 10);
-	b77[6] = (n28b >> 2);
-	b77[7] = (uint8_t) (n28b << 6) | (uint8_t) (igrid4 >> 10);
-	b77[8] = (igrid4 >> 2);
-	b77[9] = (uint8_t) (igrid4 << 6) | (uint8_t) (i3 << 3);
+    // Pack into (28 + 1) + (28 + 1) + (1 + 15) + 3 bits
+    // write(c77,1000) n28a,ipa,n28b,ipb,ir,igrid4,i3
+    // 1000 format(2(b28.28,b1),b1,b15.15,b3.3)
 
-	return 0;
+    b77[0] = (n28a >> 21);
+    b77[1] = (n28a >> 13);
+    b77[2] = (n28a >> 5);
+    b77[3] = (uint8_t)(n28a << 3) | (uint8_t)(n28b >> 26);
+    b77[4] = (n28b >> 18);
+    b77[5] = (n28b >> 10);
+    b77[6] = (n28b >> 2);
+    b77[7] = (uint8_t)(n28b << 6) | (uint8_t)(igrid4 >> 10);
+    b77[8] = (igrid4 >> 2);
+    b77[9] = (uint8_t)(igrid4 << 6) | (uint8_t)(i3 << 3);
+
+    return 0;
 }
 
-static void packtext77(const char *text, uint8_t *b77) {
-	size_t length = strlen(text);
+static void packtext77(const char* text, uint8_t* b77)
+{
+    size_t length = strlen(text);
 
-	// Skip leading and trailing spaces
-	while (*text == ' ' && *text != 0) {
-		++text;
-		--length;
-	}
-	while (length > 0 && text[length - 1] == ' ') {
-		--length;
-	}
+    // Skip leading and trailing spaces
+    while (*text == ' ' && *text != 0)
+    {
+        ++text;
+        --length;
+    }
+    while (length > 0 && text[length - 1] == ' ')
+    {
+        --length;
+    }
 
-	// Clear the first 72 bits representing a long number
-	for (int i = 0; i < 9; ++i) {
-		b77[i] = 0;
-	}
+    // Clear the first 72 bits representing a long number
+    for (int i = 0; i < 9; ++i)
+    {
+        b77[i] = 0;
+    }
 
-	// Now express the text as base-42 number stored
-	// in the first 72 bits of b77
-	for (int j = 0; j < 13; ++j) {
-		// Multiply the long integer in b77 by 42
-		uint16_t x = 0;
-		for (int i = 8; i >= 0; --i) {
-			x += b77[i] * (uint16_t) 42;
-			b77[i] = (x & 0xFF);
-			x >>= 8;
-		}
+    // Now express the text as base-42 number stored
+    // in the first 72 bits of b77
+    for (int j = 0; j < 13; ++j)
+    {
+        // Multiply the long integer in b77 by 42
+        uint16_t x = 0;
+        for (int i = 8; i >= 0; --i)
+        {
+            x += b77[i] * (uint16_t)42;
+            b77[i] = (x & 0xFF);
+            x >>= 8;
+        }
 
-		// Get the index of the current char
-		if (j < length) {
-			int q = char_index(A0, text[j]);
-			x = (q > 0) ? q : 0;
-		} else {
-			x = 0;
-		}
+        // Get the index of the current char
+        if (j < length)
+        {
+            int q = char_index(A0, text[j]);
+            x = (q > 0) ? q : 0;
+        }
+        else
+        {
+            x = 0;
+        }
 
-		// Here we double each added number in order to have the result multiplied
-		// by two as well, so that it's a 71 bit number left-aligned in 72 bits (9 bytes)
-		x <<= 1;
+        // Here we double each added number in order to have the result multiplied
+        // by two as well, so that it's a 71 bit number left-aligned in 72 bits (9 bytes)
+        x <<= 1;
 
-		// Now add the number to our long number
-		for (int i = 8; i >= 0; --i) {
-			if (x == 0)
-				break;
-			x += b77[i];
-			b77[i] = (x & 0xFF);
-			x >>= 8;
-		}
-	}
+        // Now add the number to our long number
+        for (int i = 8; i >= 0; --i)
+        {
+            if (x == 0)
+                break;
+            x += b77[i];
+            b77[i] = (x & 0xFF);
+            x >>= 8;
+        }
+    }
 
-	// Set n3=0 (bits 71..73) and i3=0 (bits 74..76)
-	b77[8] &= 0xFE;
-	b77[9] &= 0x00;
+    // Set n3=0 (bits 71..73) and i3=0 (bits 74..76)
+    b77[8] &= 0xFE;
+    b77[9] &= 0x00;
 }
 
-int pack77(const char *msg, uint8_t *c77) {
-	// Check Type 1 (Standard 77-bit message) or Type 2, with optional "/P"
-	if (0 == pack77_1(msg, c77)) {
-		return 0;
-	}
+int pack77(const char* msg, uint8_t* c77)
+{
+    // Check Type 1 (Standard 77-bit message) or Type 2, with optional "/P"
+    if (0 == pack77_1(msg, c77))
+    {
+        return 0;
+    }
 
-	packtext77(msg, c77);
-	return 0;
+    packtext77(msg, c77);
+    return 0;
 }
 
 #ifdef UNIT_TEST
 
 #include "unpack.h"
 
-int test1() {
-    const char *inputs[] = {
+int test1()
+{
+    const char* inputs[] = {
         "",
         " ",
         "ABC",
@@ -304,7 +330,8 @@ int test1() {
         0
     };
 
-    for (int i = 0; inputs[i]; ++i) {
+    for (int i = 0; inputs[i]; ++i)
+    {
         int32_t result = pack28(inputs[i]);
         printf("pack28(\"%s\") = %d\n", inputs[i], result);
     }
@@ -312,8 +339,9 @@ int test1() {
     return 1;
 }
 
-int test2() {
-    const char *inputs[] = {
+int test2()
+{
+    const char* inputs[] = {
         "CQ LL3JG",
         "CQ LL3JG KO26",
         "CQ QRP LL3JG KO26",
@@ -334,52 +362,48 @@ int test2() {
         "L0UAA LL3JG 73",
         "L0UAA LL3JG RR",
         "L0UAA LL3JG RR73",
-        
-		"GW8KIG GM8KIG KO26",
-		"GW8KIG GM8KIG +02",
-		"GW8KIG GM8KIG RRR",
-		"GW8KIG GM8KIG 73",
-		"GW8KIG GM8KIG RR",
-		"GW8KIG GM8KIG RR73",
 
-		"L0UAA/P LL3JG KO26",
+        "GW8KIG GM8KIG KO26",
+        "GW8KIG GM8KIG +02",
+        "GW8KIG GM8KIG RRR",
+        "GW8KIG GM8KIG 73",
+        "GW8KIG GM8KIG RR",
+        "GW8KIG GM8KIG RR73",
+
+        "L0UAA/P LL3JG KO26",
         "L0UAA/P LL3JG +02",
         "L0UAA/P LL3JG RRR",
         "L0UAA/P LL3JG 73",
         "L0UAA/P LL3JG RR",
         "L0UAA/P LL3JG RR73",
 
-		"GW8KIG/P GM8KIG/P KO26",
-		"GW8KIG/P GM8KIG/P +02",
-		"GW8KIG/P GM8KIG/P RRR",
-		"GW8KIG/P GM8KIG/P 73",
-		"GW8KIG/P GM8KIG/P RR",
-		"GW8KIG/P GM8KIG/P RR73",
-
-		"L0UAA LL3JG/P KO26",
+        "L0UAA LL3JG/P KO26",
         "L0UAA LL3JG/P +02",
         "L0UAA LL3JG/P RRR",
         "L0UAA LL3JG/P 73",
         "L0UAA LL3JG/P RR",
         "L0UAA LL3JG/P RR73",
 
-		"L0UAA/P LL3JG/P KO26",
-        "L0UAA/P LL3JG/P +02",
-        "L0UAA/P LL3JG/P RRR",
-        "L0UAA/P LL3JG/P 73",
-        "L0UAA/P LL3JG/P RR",
-        "L0UAA/P LL3JG/P RR73",
-        0
+        "GW8KIG/P GM8KIG/P KO26",
+        "GW8KIG/P GM8KIG/P +02",
+        "GW8KIG/P GM8KIG/P RRR",
+        "GW8KIG/P GM8KIG/P 73",
+        "GW8KIG/P GM8KIG/P RR",
+        "GW8KIG/P GM8KIG/P RR73",
+
+		0
     };
 
-    for (int i = 0; inputs[i]; ++i) {
+    for (int i = 0; inputs[i]; ++i)
+    {
         static const int result_size = 10;
         uint8_t result[10];
         int j;
         char output[64];
         int rc = pack77_1(inputs[i], result);
         printf("pack77_1(\"%s\") -> [", inputs[i]);
-        for (j = 0; j < result_size-1; ++j) {
+        for (j = 0; j < result_size - 1; ++j)
+        {
             printf("%02x ", result[j]);
         }
         printf("%02x] = %d \n", result[j], rc);
@@ -390,7 +414,8 @@ int test2() {
     return 1;
 }
 
-int main() {
+int main()
+{
     test1();
     test2();
     return 0;
