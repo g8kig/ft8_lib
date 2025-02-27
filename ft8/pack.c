@@ -32,13 +32,13 @@ static int32_t pack28(const char *callsign) {
 		return 0;
 	if (memcmp(callsign, "QRZ ", 3) == 0)
 		return 1;
-	if (memcmp(callsign, "CQ_SOTA ", 8) == 0)
+	if (memcmp(callsign, "CQ SOTA ", 8) == 0)
 		return 386456;
-	if (memcmp(callsign, "CQ_POTA ", 8) == 0)
+	if (memcmp(callsign, "CQ POTA ", 8) == 0)
 		return 327407;
-	if (memcmp(callsign, "CQ_QRP ", 7) == 0)
+	if (memcmp(callsign, "CQ QRP ", 7) == 0)
 		return 349184;
-	if (memcmp(callsign, "CQ_DX ", 6) == 0)
+	if (memcmp(callsign, "CQ DX ", 6) == 0)
 		return 1135;
 	if (memcmp(callsign, "CQ ", 3) == 0)
 		return 2;
@@ -161,8 +161,22 @@ static int pack77_1(const char *msg, uint8_t *b77) {
 	if (s1 == 0)
 		return -1;
 
-	const char *call1 = msg;        // 1st call
-	const char *call2 = s1 + 1;     // 2nd call
+	s1++;
+	if (memcmp(s1, "DX ", 3) == 0)
+    {
+        s1 += 3;
+    }
+    else if (memcmp(s1, "QRP ", 4) == 0)
+    {
+        s1 += 4;
+    }
+    else if ((*s1 == 'P' || *s1 == 'S') && memcmp(s1 + 1, "OTA ", 4) == 0)
+	{
+        s1 += 5;
+	}
+    
+	const char* call1 = msg;    // 1st call
+	const char *call2 = s1;     // 2nd call
 
 	int32_t n28a = pack28(call1);
 	int32_t n28b = pack28(call2);
@@ -206,7 +220,7 @@ static int pack77_1(const char *msg, uint8_t *b77) {
 }
 
 static void packtext77(const char *text, uint8_t *b77) {
-	int length = strlen(text);
+	size_t length = strlen(text);
 
 	// Skip leading and trailing spaces
 	while (*text == ' ' && *text != 0) {
@@ -272,6 +286,8 @@ int pack77(const char *msg, uint8_t *c77) {
 
 #ifdef UNIT_TEST
 
+#include "unpack.h"
+
 int test1() {
     const char *inputs[] = {
         "",
@@ -299,21 +315,32 @@ int test2() {
     const char *inputs[] = {
         "CQ LL3JG",
         "CQ LL3JG KO26",
+        "CQ QRP LL3JG KO26",
+        "CQ DX LL3JG KO26",
+        "CQ POTA LL3JG KO26",
+        "CQ SOTA LL3JG KO26",
         "L0UAA LL3JG KO26",
         "L0UAA LL3JG +02",
         "L0UAA LL3JG RRR",
         "L0UAA LL3JG 73",
+        "L0UAA LL3JG RR",
+        "L0UAA LL3JG RR73",
         0
     };
 
     for (int i = 0; inputs[i]; ++i) {
+        static const int result_size = 10;
         uint8_t result[10];
+        int j;
+        char output[64];
         int rc = pack77_1(inputs[i], result);
-        printf("pack77_1(\"%s\") = %d\t[", inputs[i], rc);
-        for (int j = 0; j < 10; ++j) {
+        printf("pack77_1(\"%s\") -> [", inputs[i]);
+        for (j = 0; j < result_size-1; ++j) {
             printf("%02x ", result[j]);
         }
-        printf("]\n");
+        printf("%02x] = %d \n", result[j], rc);
+        rc = unpack77(result, output);
+        printf("unpack77() -> \"%s\" = %d\n", output, rc);
     }
 
     return 1;

@@ -95,6 +95,12 @@ static int unpack28(uint32_t n28, uint8_t ip, uint8_t i3, char *result) {
 	return 0;   // Success
 }
 
+static char* stpcpy(char* dst, const char* src)
+{
+    strcpy(dst, src);
+    return dst + strlen(src);
+}
+
 static int unpack_type1(const uint8_t *a77, uint8_t i3, char *field1, char *field2,
 		char *field3) {
 	uint32_t n28a, n28b;
