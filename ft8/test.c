@@ -61,39 +61,29 @@ static int test2()
 
         "L0UAA LL3JG KO26",
         "L0UAA LL3JG +02",
-        "L0UAA LL3JG RRR",
-        "L0UAA LL3JG 73",
-        "L0UAA LL3JG RR",
+        "L0UAA LL3JG R-06",
+        "L0UAA LL3JG -6",
         "L0UAA LL3JG RR73",
 
         "GW8KIG GM8KIG KO26",
         "GW8KIG GM8KIG +02",
-        "GW8KIG GM8KIG RRR",
-        "GW8KIG GM8KIG 73",
-        "GW8KIG GM8KIG RR",
+        "GW8KIG GM8KIG R+6",
         "GW8KIG GM8KIG RR73",
 
         "L0UAA/P LL3JG KO26",
-        "L0UAA/P LL3JG +02",
-        "L0UAA/P LL3JG RRR",
-        "L0UAA/P LL3JG 73",
-        "L0UAA/P LL3JG RR",
+        "L0UAA/P LL3JG -05",
+        "L0UAA/P LL3JG R-5",
         "L0UAA/P LL3JG RR73",
 
         "L0UAA LL3JG/P KO26",
-        "L0UAA LL3JG/P +02",
-        "L0UAA LL3JG/P RRR",
-        "L0UAA LL3JG/P 73",
-        "L0UAA LL3JG/P RR",
+        "L0UAA LL3JG/P +05",
+        "L0UAA LL3JG/P R-7",
         "L0UAA LL3JG/P RR73",
 
         "GW8KIG/P GM8KIG/P KO26",
         "GW8KIG/P GM8KIG/P +02",
-        "GW8KIG/P GM8KIG/P RRR",
-        "GW8KIG/P GM8KIG/P 73",
-        "GW8KIG/P GM8KIG/P RR",
+        "GW8KIG/P GM8KIG/P R+4",
         "GW8KIG/P GM8KIG/P RR73",
-        "G8QRP G8QRP 73",
         0
     };
 
