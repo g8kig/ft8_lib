@@ -15,7 +15,6 @@
 
 static const char A0[43] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ+-./?";
 static const char A1[38] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-static const char A2[37] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const char A3[11] = "0123456789";
 static const char A4[28] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -39,7 +38,6 @@ int32_t pack28(const char* callsign)
 {
     int32_t NTOKENS = 2063592L;
     int32_t MAX22 = 4194304L;
-    int8_t slashP = 0;
 
     // Check for special tokens first
     if (memcmp(callsign, CQ_SOTA_, sizeof(CQ_SOTA_)) == 0)
@@ -69,7 +67,6 @@ int32_t pack28(const char* callsign)
 
     if (length > 3 && memcmp(callsign + length - 2, "/P", 2) == 0)
     {
-        slashP = 1;
         length -= 2;
     }
     
@@ -103,7 +100,8 @@ int32_t pack28(const char* callsign)
     // Check for standard callsign
     int i0, i1, i2, i3, i4, i5;
     if ((i0 = char_index(A1, c6[0])) >= 0 
-        && (i1 = char_index(A2, c6[1])) >= 0
+        // do not match blank
+        && (i1 = char_index(A1+1, c6[1])) >= 0
         && (i2 = char_index(A3, c6[2])) >= 0
         && (i3 = char_index(A4, c6[3])) >= 0
         && (i4 = char_index(A4, c6[4])) >= 0
@@ -119,6 +117,16 @@ int32_t pack28(const char* callsign)
         return NTOKENS + MAX22 + n28;
     }
     return -1;
+}
+
+static uint8_t has_suffix(const char* str)
+{
+    const char* first = strchr(str, ' ');
+    if (first == NULL)
+    {
+        first = str;
+    }
+    return memcmp(first - 2, "/P", 2) == 0;
 }
 
 static uint16_t packgrid(const char* grid4)
@@ -191,11 +199,8 @@ int pack77_1(const char* msg, uint8_t* b77)
         s1 += sizeof(POTA_);
     }
 
-    const char* call1 = msg; // 1st call
-    const char* call2 = s1;  // 2nd call
-
-    int32_t n28a = pack28(call1);
-    int32_t n28b = pack28(call2);
+    int32_t n28a = pack28(msg); // first call
+    int32_t n28b = pack28(s1);  // second call
 
     if (n28a < 0 || n28b < 0)
         return -1;
@@ -214,11 +219,25 @@ int pack77_1(const char* msg, uint8_t* b77)
         igrid4 = packgrid(0);
     }
 
-    uint8_t i3 = 1; // No suffix or /P
+    uint8_t i3 = 1; // No suffix /P
 
     // Shift in ipa and ipb bits into n28a and n28b
-    n28a <<= 1; // ipa = 0
-    n28b <<= 1; // ipb = 0
+    n28a <<= 1;
+    n28b <<= 1;
+
+    // apply the /P suffix first call
+    if (has_suffix(msg))
+    {
+        n28a += 1;
+        i3 = 2;
+    }
+
+    // apply the /P suffix second call
+    if (has_suffix(s1))
+    {
+        n28b += 1;
+        i3 = 2;
+    }
 
     b77[0] = (n28a >> 21);
     b77[1] = (n28a >> 13);

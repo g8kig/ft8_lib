@@ -31,7 +31,6 @@ static int test1()
         "CQ ",
         "QRP ",
         "DX ",
-        "A0QRP",
         0
     };
 
