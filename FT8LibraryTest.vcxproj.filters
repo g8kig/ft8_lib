@@ -30,6 +30,9 @@
     <ClCompile Include="ft8\unpack.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ft8\test.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ft8\encode.h">

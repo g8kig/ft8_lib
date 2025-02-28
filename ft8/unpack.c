@@ -51,7 +51,7 @@ static int unpack28(uint32_t n28, uint8_t ip, uint8_t i3, char *result) {
 	n28 = n28 - NTOKENS;
 	if (n28 < MAX22) {
 		// This is a 22-bit hash of a result
-		//call hash22(n22,c13)     !Retrieve result from hash table
+		// call hash22(n22,c13)     !Retrieve result from hash table
 		// TODO: implement
 		// strcpy(result, "<...>");
 		result[0] = '<';
@@ -64,8 +64,7 @@ static int unpack28(uint32_t n28, uint8_t ip, uint8_t i3, char *result) {
 	// Standard callsign
 	uint32_t n = n28 - MAX22;
 
-	char callsign[7];
-	callsign[6] = '\0';
+	char callsign[7] = { 0 };
 	callsign[5] = charn(n % 27, 4);
 	n /= 27;
 	callsign[4] = charn(n % 27, 4);
@@ -297,7 +296,10 @@ static int unpack_nonstandard(const uint8_t *a77, char *field1, char *field2,
 			strcpy(field3, "RR73");
 		else if (nrpt == 3)
 			strcpy(field3, "73");
-		else {
+        else if (nrpt == 4)
+            strcpy(field3, "RR");
+        else
+        {
 			field3[0] = '\0';
 		}
 	} else {

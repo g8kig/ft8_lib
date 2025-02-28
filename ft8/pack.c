@@ -13,60 +13,66 @@
 #include <string.h>
 #include <stdio.h>
 
-// TODO: This is wasteful, should figure out something more elegant
-static const char A0[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ+-./?";
-static const char A1[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-static const char A2[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-static const char A3[] = "0123456789";
-static const char A4[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const char A0[43] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ+-./?";
+static const char A1[38] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const char A2[37] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const char A3[11] = "0123456789";
+static const char A4[28] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-static const char DE_[] = "DE ";
-static const char QRZ_[] = "QRZ ";
-static const char CQ_SOTA_[] = "CQ SOTA ";
-static const char CQ_POTA_[] = "CQ POTA ";
-static const char CQ_QRP_[] = "CQ QRP ";
-static const char CQ_DX_[] = "CQ DX ";
-static const char CQ_[] = "CQ ";
-static const char DX_[] = "DX ";
-static const char OTA_[] = "OTA ";
-static const char QRP_[] = "QRP ";
-static const char RRR[] = "RRR";
-static const char RR[] = "RR";
-static const char RR73[] = "RR73";
-static const char _73[] = "73";
+static const char DE_[3] = "DE ";
+static const char QRP_[4] = "QRP ";
+static const char CQ_SOTA_[8] = "CQ SOTA ";
+static const char CQ_POTA_[8] = "CQ POTA ";
+static const char CQ_QRP_[7] = "CQ QRP ";
+static const char CQ_DX_[6] = "CQ DX ";
+static const char CQ_[3] = "CQ ";
+static const char DX_[3] = "DX ";
+static const char POTA_[5] = "POTA ";
+static const char SOTA_[5] = "SOTA ";
+static const char RRR[4] = "RRR";
+static const char RR73[5] = "RR73";
+static const char _73[3] = "73";
 
 // Pack a special token, a 22-bit hash code, or a valid base call
 // into a 28-bit integer.
-static int32_t pack28(const char* callsign)
+int32_t pack28(const char* callsign)
 {
-
     int32_t NTOKENS = 2063592L;
     int32_t MAX22 = 4194304L;
+    int8_t slashP = 0;
 
     // Check for special tokens first
-    if (memcmp(callsign, DE_, sizeof(DE_)) == 0)
-        return 0;
-    if (memcmp(callsign, QRZ_, sizeof(QRZ_)) == 0)
-        return 1;
     if (memcmp(callsign, CQ_SOTA_, sizeof(CQ_SOTA_)) == 0)
         return 386456;
     if (memcmp(callsign, CQ_POTA_, sizeof(CQ_POTA_)) == 0)
         return 327407;
     if (memcmp(callsign, CQ_QRP_, sizeof(CQ_QRP_)) == 0)
-        return 349184;
+        return 13898;
+        // return 349184; QRPP 
     if (memcmp(callsign, CQ_DX_, sizeof(CQ_DX_)) == 0)
         return 1135;
+
+    if (memcmp(callsign, DE_, sizeof(DE_)) == 0)
+        return 0;
+    if (memcmp(callsign, QRP_, sizeof(QRP_)) == 0)
+        return 1;
     if (memcmp(callsign, CQ_, sizeof(CQ_)) == 0)
         return 2;
 
     char c6[6] = "      ";
 
-    int length = 0; // strlen(callsign);  // We will need it later
+    int length = 0;
     while (callsign[length] != ' ' && callsign[length] != 0)
     {
         length++;
     }
 
+    if (length > 3 && memcmp(callsign + length - 2, "/P", 2) == 0)
+    {
+        slashP = 1;
+        length -= 2;
+    }
+    
     // Copy callsign to 6 character buffer
     if (starts_with(callsign, "3DA0") && length <= 7)
     {
@@ -74,8 +80,7 @@ static int32_t pack28(const char* callsign)
         memcpy(c6, "3D0", 3);
         memcpy(c6 + 3, callsign + 4, length - 4);
     }
-    else if (starts_with(callsign, "3X") && is_letter(callsign[2])
-        && length <= 7)
+    else if (starts_with(callsign, "3X") && is_letter(callsign[2]) && length <= 7)
     {
         // Work-around for Guinea prefixes: 3XA0XYZ -> QA0XYZ
         memcpy(c6, "Q", 1);
@@ -97,7 +102,8 @@ static int32_t pack28(const char* callsign)
 
     // Check for standard callsign
     int i0, i1, i2, i3, i4, i5;
-    if ((i0 = char_index(A1, c6[0])) >= 0 && (i1 = char_index(A2, c6[1])) >= 0
+    if ((i0 = char_index(A1, c6[0])) >= 0 
+        && (i1 = char_index(A2, c6[1])) >= 0
         && (i2 = char_index(A3, c6[2])) >= 0
         && (i3 = char_index(A4, c6[3])) >= 0
         && (i4 = char_index(A4, c6[4])) >= 0
@@ -119,27 +125,26 @@ static uint16_t packgrid(const char* grid4)
 {
     uint16_t MAXGRID4 = 32400;
 
-    if (grid4 == 0)
+    if (grid4 == NULL)
     {
         // Two callsigns only, no report/grid
         return MAXGRID4 + 1;
     }
 
     // Take care of special cases
-    if (equals(grid4, RRR) == 0)
+    if (equals(grid4, RRR))
         return MAXGRID4 + 2;
-    if (equals(grid4, RR73) == 0)
+    if (equals(grid4, RR73))
         return MAXGRID4 + 3;
-	if (equals(grid4, RR) == 0)
-        return MAXGRID4 + 1;
-    if (equals(grid4, _73) == 0)
+    if (equals(grid4, _73))
         return MAXGRID4 + 4;
 
     // Check for standard 4 letter grid
-    if (in_range(grid4[0], 'A', 'R') && in_range(grid4[1], 'A', 'R')
-        && is_digit(grid4[2]) && is_digit(grid4[3]))
+    if (in_range(grid4[0], 'A', 'R') 
+        && in_range(grid4[1], 'A', 'R')
+        && is_digit(grid4[2]) 
+        && is_digit(grid4[3]))
     {
-        // if (w(3).eq.'R ') ir=1
         uint16_t igrid4 = (grid4[0] - 'A');
         igrid4 = igrid4 * 18 + (grid4[1] - 'A');
         igrid4 = igrid4 * 10 + (grid4[2] - '0');
@@ -166,7 +171,7 @@ static uint16_t packgrid(const char* grid4)
 }
 
 // Pack Type 1 (Standard 77-bit message) and Type 2 (ditto, with a "/P" call)
-static int pack77_1(const char* msg, uint8_t* b77)
+int pack77_1(const char* msg, uint8_t* b77)
 {
     // Locate the first delimiter
     const char* s1 = strchr(msg, ' ');
@@ -175,15 +180,15 @@ static int pack77_1(const char* msg, uint8_t* b77)
 
     if (memcmp(++s1, DX_, sizeof(DX_)) == 0)
     {
-        s1 += 3;
+        s1 += sizeof(DX_);
     }
     else if (memcmp(s1, QRP_, sizeof(QRP_)) == 0)
     {
-        s1 += 4;
+        s1 += sizeof(QRP_);
     }
-    else if ((*s1 == 'P' || *s1 == 'S') && memcmp(s1 + 1, OTA_, sizeof(OTA_)) == 0)
+    else if ((*s1 == POTA_[0] || *s1 == SOTA_[0]) && memcmp(s1 + 1, POTA_ + 1, sizeof(POTA_) - 1) == 0)
     {
-        s1 += 5;
+        s1 += sizeof(POTA_);
     }
 
     const char* call1 = msg; // 1st call
@@ -209,15 +214,11 @@ static int pack77_1(const char* msg, uint8_t* b77)
         igrid4 = packgrid(0);
     }
 
-    uint8_t i3 = 1; // No suffix or /R
+    uint8_t i3 = 1; // No suffix or /P
 
     // Shift in ipa and ipb bits into n28a and n28b
     n28a <<= 1; // ipa = 0
     n28b <<= 1; // ipb = 0
-
-    // Pack into (28 + 1) + (28 + 1) + (1 + 15) + 3 bits
-    // write(c77,1000) n28a,ipa,n28b,ipb,ir,igrid4,i3
-    // 1000 format(2(b28.28,b1),b1,b15.15,b3.3)
 
     b77[0] = (n28a >> 21);
     b77[1] = (n28a >> 13);
@@ -309,116 +310,3 @@ int pack77(const char* msg, uint8_t* c77)
     packtext77(msg, c77);
     return 0;
 }
-
-#ifdef UNIT_TEST
-
-#include "unpack.h"
-
-int test1()
-{
-    const char* inputs[] = {
-        "",
-        " ",
-        "ABC",
-        "A9",
-        "L9A",
-        "L7BC",
-        "L0ABC",
-        "LL3JG",
-        "LL3AJG",
-        "CQ ",
-        0
-    };
-
-    for (int i = 0; inputs[i]; ++i)
-    {
-        int32_t result = pack28(inputs[i]);
-        printf("pack28(\"%s\") = %d\n", inputs[i], result);
-    }
-
-    return 1;
-}
-
-int test2()
-{
-    const char* inputs[] = {
-        "CQ LL3JG",
-        "CQ LL3JG KO26",
-        "CQ QRP LL3JG KO26",
-        "CQ DX LL3JG KO26",
-        "CQ POTA LL3JG KO26",
-        "CQ SOTA LL3JG KO26",
-
-        "CQ LL3JG/P",
-        "CQ LL3JG/P KO26",
-        "CQ QRP LL3JG/P KO26",
-        "CQ DX LL3JG/P KO26",
-        "CQ POTA LL3JG/P KO26",
-        "CQ SOTA LL3JG/P KO26",
-
-        "L0UAA LL3JG KO26",
-        "L0UAA LL3JG +02",
-        "L0UAA LL3JG RRR",
-        "L0UAA LL3JG 73",
-        "L0UAA LL3JG RR",
-        "L0UAA LL3JG RR73",
-
-        "GW8KIG GM8KIG KO26",
-        "GW8KIG GM8KIG +02",
-        "GW8KIG GM8KIG RRR",
-        "GW8KIG GM8KIG 73",
-        "GW8KIG GM8KIG RR",
-        "GW8KIG GM8KIG RR73",
-
-        "L0UAA/P LL3JG KO26",
-        "L0UAA/P LL3JG +02",
-        "L0UAA/P LL3JG RRR",
-        "L0UAA/P LL3JG 73",
-        "L0UAA/P LL3JG RR",
-        "L0UAA/P LL3JG RR73",
-
-        "L0UAA LL3JG/P KO26",
-        "L0UAA LL3JG/P +02",
-        "L0UAA LL3JG/P RRR",
-        "L0UAA LL3JG/P 73",
-        "L0UAA LL3JG/P RR",
-        "L0UAA LL3JG/P RR73",
-
-        "GW8KIG/P GM8KIG/P KO26",
-        "GW8KIG/P GM8KIG/P +02",
-        "GW8KIG/P GM8KIG/P RRR",
-        "GW8KIG/P GM8KIG/P 73",
-        "GW8KIG/P GM8KIG/P RR",
-        "GW8KIG/P GM8KIG/P RR73",
-
-		0
-    };
-
-    for (int i = 0; inputs[i]; ++i)
-    {
-        static const int result_size = 10;
-        uint8_t result[10];
-        int j;
-        char output[64];
-        int rc = pack77_1(inputs[i], result);
-        printf("pack77_1(\"%s\") -> [", inputs[i]);
-        for (j = 0; j < result_size - 1; ++j)
-        {
-            printf("%02x ", result[j]);
-        }
-        printf("%02x] = %d \n", result[j], rc);
-        rc = unpack77(result, output);
-        printf("unpack77() -> \"%s\" = %d\n", output, rc);
-    }
-
-    return 1;
-}
-
-int main()
-{
-    test1();
-    test2();
-    return 0;
-}
-
-#endif

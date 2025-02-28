@@ -130,6 +130,7 @@
     <ClCompile Include="ft8\constants.c" />
     <ClCompile Include="ft8\encode.c" />
     <ClCompile Include="ft8\pack.c" />
+    <ClCompile Include="ft8\test.c" />
     <ClCompile Include="ft8\text.c" />
     <ClCompile Include="ft8\unpack.c" />
   </ItemGroup>
