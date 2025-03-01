@@ -84,6 +84,11 @@ static int test2()
         "GW8KIG/P GM8KIG/P +02",
         "GW8KIG/P GM8KIG/P R+4",
         "GW8KIG/P GM8KIG/P RR73",
+
+        "CQ 3DA0XYZ JA11",
+        "CQ 3XA0XYZ/P JA11",
+        "CQ AB0XYZ JA11",
+        "CQ A0XYZ JA11",
         0
     };
 
